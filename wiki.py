@@ -19,8 +19,9 @@ def take_first_sentence(s):
     return s.split("\n")[0]
 
 async def fetch_wiki_data(session, lang, title, props):
+    headers = {'User-Agent': 'MashinaBot/1.0 (https://github.com/l3monardo/Mashina-bot)'}
     url = f"https://{lang}.wikipedia.org/w/api.php?action=query&format=json&prop={props}&titles={title}&lllimit=max"
-    async with session.get(url) as response:
+    async with session.get(url, ssl=False, headers=headers) as response:
         data = await response.json()
     page = next(iter(data.get("query", {}).get("pages", {}).values()), None)
     return page 
@@ -70,26 +71,28 @@ async def wiki_summary(lang, text):
 
 async def fetch_wiktionary_image_title(session, title):
     """Fetch the first image filename from English Wiktionary page"""
+    headers = {'User-Agent': 'MashinaBot/1.0 (https://github.com/l3monardo/Mashina-bot)'}
     page = urllib.parse.quote(title)
     url = f"https://en.wiktionary.org/w/api.php?action=parse&format=json&page={page}&prop=images"
-    async with session.get(url) as response:
+    async with session.get(url, ssl=False, headers=headers) as response:
         data = await response.json()
     images = data.get("parse", {}).get("images", []) or []
     if not images:
         return None
     for image in images:
         lower = image.lower()
-        # Skip logo images
-        if lower.startswith("wiktionary-logo") or lower.startswith("commons-logo"):
+        # Skip logo images and non-photo formats like SVG
+        if any(x in lower for x in ["wiktionary-logo", "commons-logo", ".svg"]):
             continue
         return f"File:{image}"
     return None
 
 async def fetch_wiktionary_image_url(session, image_title):
     """Get the direct URL for a Wiktionary image"""
+    headers = {'User-Agent': 'MashinaBot/1.0 (https://github.com/l3monardo/Mashina-bot)'}
     title = urllib.parse.quote(image_title)
     url = f"https://en.wiktionary.org/w/api.php?action=query&format=json&titles={title}&prop=imageinfo&iiprop=url"
-    async with session.get(url) as response:
+    async with session.get(url, ssl=False, headers=headers) as response:
         data = await response.json()
     page = next(iter(data.get("query", {}).get("pages", {}).values()), None)
     if not isinstance(page, dict):

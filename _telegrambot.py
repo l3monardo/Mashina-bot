@@ -69,17 +69,17 @@ async def handle_najdtislovo(message):
                 if en_word:
                     try:
                         image_url = await wiki.wiktionary_first_image(en_word)
-                    except:
+                    except Exception as e:
                         image_url = None
+                
                 if image_url:
-                    # Zero-width space link embeds the image via Telegram preview
-                    hidden_link = f"[\u200b](<{image_url}>)\n"
-                    text = hidden_link + text
-                    text = text.replace("<", "").replace(">", "")
-                    await reply(message, text, is_disable=False)
-                else:
-                    text = text.replace("<", "").replace(">", "")
-                    await reply(message, text, is_disable=True)
+                    try:
+                        await bot.send_photo(message.chat.id, image_url)
+                    except Exception as e:
+                        print(f"DEBUG: Failed to send photo: {e}")
+                
+                text = text.replace("<", "").replace(">", "")
+                await reply(message, text, is_disable=True)
             else:
                 text = str(item).replace("<", "").replace(">", "")
                 await reply(message, text, is_disable=True)
